@@ -1,0 +1,10 @@
+platform :ios,9.0
+
+target 'Example' do
+
+pod 'IMYHiveMind', :path => '../'
+
+pod 'MobA', :path => './MobA'
+pod 'MobB', :path => './MobB'
+
+end
