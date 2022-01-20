@@ -15,8 +15,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)say;
 @end
 
+@protocol Peoson_hive_BBB
+- (NSString *)say1;
+- (NSString *)say2;
+@end
+
 // 跟 MobA 定义不一致，会弹窗警告
-@protocol Warning_hive_B
+@protocol Warning_hive_B <Peoson_hive_BBB>
 - (void)showTitle:(NSInteger)title;
 @end
 

@@ -411,12 +411,29 @@ static void * _imy_hive_copy_sections(const char *key,
     }
     free(list);
     
-    [hiveMap enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSArray *names, BOOL * _Nonnull stop) {
-        Protocol *standard = NSProtocolFromString(key);
+    [hiveMap enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSMutableArray *names, BOOL * _Nonnull stop) {
+        // 排个序，优先不加 _hive_ 在前面
+        [names sortUsingComparator:^NSComparisonResult(NSString *obj1, NSString *obj2) {
+            return [obj1 compare:obj2];
+        }];
+        // 获取标准协议
+        NSString *standardName = [key stringByAppendingString:@"_hive_impl"];
+        Protocol *standard = NSProtocolFromString(standardName);
+        NSDictionary *standardMethods = nil;
         if (!standard) {
-            standard = NSProtocolFromString(names.firstObject);
+            NSInteger maxMethodCount = 0;
+            for (NSString *other in names) {
+                Protocol *otherProtocol = NSProtocolFromString(other);
+                NSDictionary *otherMethods = [self binderProtocolMethodsInfo:otherProtocol];
+                if (otherMethods.count > maxMethodCount) {
+                    standard = otherProtocol;
+                    standardMethods = otherMethods;
+                    maxMethodCount = otherMethods.count;
+                }
+            }
+        } else {
+            standardMethods = [self binderProtocolMethodsInfo:standard];
         }
-        NSDictionary *standardMethods = [self binderProtocolMethodsInfo:standard];
         for (NSString *other in names) {
             Protocol *otherProtocol = NSProtocolFromString(other);
             NSDictionary *otherMethods = [self binderProtocolMethodsInfo:otherProtocol];
@@ -446,6 +463,25 @@ static void * _imy_hive_copy_sections(const char *key,
                required:(BOOL)required
                instance:(BOOL)instance
                   toMap:(NSMutableDictionary *)dict {
+    NSString *name = NSStringFromProtocol(protocol);
+    if ([name hasPrefix:@"NS"] ||
+        [name hasPrefix:@"UI"] ||
+        [name hasPrefix:@"WK"] ||
+        [name hasPrefix:@"UN"]) {
+        // 系统Protocol 不进行读取
+        return;
+    }
+    // 读取继承协议的方法定义
+    unsigned int dependCount = 0;
+    Protocol * __unsafe_unretained * dependencies = protocol_copyProtocolList(protocol, &dependCount);
+    for (int i = 0; i < dependCount; i++) {
+        Protocol *dependProtocol = dependencies[i];
+        [self getProtocolInfo:dependProtocol required:required instance:instance toMap:dict];
+    }
+    if (dependencies) {
+        free(dependencies);
+    }
+    // 读取自身方法定义
     unsigned int count = 0;
     struct objc_method_description *list = protocol_copyMethodDescriptionList(protocol,
                                                                               required,

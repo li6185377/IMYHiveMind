@@ -13,7 +13,8 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  对所有 Protocol 会截取 _hive_ 之前的名称 当做统一的 Key
  在不同模块，可以定义类似的 Protocol 来避免代码依赖
- 框架在Debug包运行时，会扫描所有相关 Protocol 的定义，避免多方的Protocol定义不一致！
+ 框架在Debug包运行时，会扫描所有相关 Protocol 的定义 跟 标准协议的定义 进行对比！
+ 标准协议：优先使用后缀是 _hive_impl 当做标准协议，无 则使用方法数最多的当标准协议
 
  在模块 A 注册:
          
