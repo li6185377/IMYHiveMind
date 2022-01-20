@@ -23,6 +23,10 @@ static void * _imy_hive_copy_sections(const char *key,
 @property (nonatomic, assign) NSInteger priority;
 @property (nonatomic, assign) BOOL hasCustomNew;
 @property (nonatomic, assign) BOOL hasResponds;
+
+- (BOOL)isBlanker;
+- (BOOL)blankerAs:(IMYHiveEngine *)engine;
+
 @end
 
 @interface IMYHiveMind () {
@@ -72,6 +76,7 @@ static inline __attribute__((always_inline)) NSString * kShortProtocolKey(NSStri
         return;
     }
     NSMutableDictionary *allMap = [NSMutableDictionary dictionary];
+    NSMutableDictionary *classMap = [NSMutableDictionary dictionary];
     // 获取绑定配置
     for (int i = 0; i < sect_count; i++) {
         struct _imy_hive_bind_class bind = sect_array[i];
@@ -83,6 +88,7 @@ static inline __attribute__((always_inline)) NSString * kShortProtocolKey(NSStri
         NSString *protoName = [NSString stringWithUTF8String:bind.prot];
         NSString *key = kShortProtocolKey(protoName);
         IMYHiveEngine *engine = [IMYHiveEngine new];
+        // Class
         engine.clazz = clazz;
         // 是否单例
         engine.singleton = bind.singleton || bind.iscls;
@@ -94,6 +100,15 @@ static inline __attribute__((always_inline)) NSString * kShortProtocolKey(NSStri
         engine.hasCustomNew = [clazz respondsToSelector:@selector(hive_newWithParams:)];
         // 自定义响应
         engine.hasResponds = [clazz respondsToSelector:@selector(hive_respondsForParams:)];
+        
+        // 多个不同 Protocol 可绑定到同一个 engine(空白/无自定义)
+        IMYHiveEngine *blanker = [classMap objectForKey:clazz];
+        if (!blanker && engine.isBlanker) {
+            [classMap setObject:engine forKey:(id)clazz];
+        }
+        if ([blanker blankerAs:engine]) {
+            engine = blanker;
+        }
         // 存储集合
         NSMutableArray<IMYHiveEngine *> *engines = [allMap objectForKey:key];
         if (!engines) {
@@ -225,6 +240,16 @@ static inline __attribute__((always_inline)) NSString * kShortProtocolKey(NSStri
 @end
 
 @implementation IMYHiveEngine
+
+- (BOOL)isBlanker {
+    // 都没自定义
+    return !self.priority && !self.hasCustomNew && !self.hasResponds;
+}
+
+- (BOOL)blankerAs:(IMYHiveEngine *)engine {
+    // 只要判断单例属性是否一致即可
+    return self.singleton == engine.singleton && self.instance == engine.instance;
+}
 
 @end
 
