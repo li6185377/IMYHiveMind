@@ -53,6 +53,8 @@ IMYHIVE_BIND_CLASS(CarImpl, ICar, NO)
 - `$protocol`：协议名（需要注入实现的协议）
 - `$singleton`：是否单例（非单例每次依赖方调用都会进行实例化）
 
+支持多个 Protocol 绑定到，同一个 Class，只会有一个实例（在无参数调用的情况下）
+
 ```
 #define IMYHIVE_BIND_CLASS($class, $protocol, $singleton)
 ```
