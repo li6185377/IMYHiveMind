@@ -44,7 +44,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - 绑定 Class to Protocol
 
 // 绑定 Class<IMYHiveInjector> to Protocol （$singleton：是否单例）
-#define IMYHIVE_BIND_CLASS($class, $protocol, $singleton) IMYHIVE_BIND_CLASS_INTACT($class, $protocol, 0, $singleton, NO)
+#define IMYHIVE_BIND_CLASS($class, $protocol, $singleton) IMYHIVE_BIND_CLASS_INTACT($class, $protocol, $singleton, 0, NO)
 // 完整的绑定方法，可调整优先级
 #define IMYHIVE_BIND_CLASS_INTACT($class, $protocol, $singleton, $priority, $iscls) _imy_hive_bind_impl("bind", $protocol, $class, $priority, $singleton, $iscls, _imy_hive_func_register_name())
 
